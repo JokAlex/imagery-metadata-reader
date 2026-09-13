@@ -1,22 +1,24 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
+from typing import Sequence
 
-from core.metadata import ProductMetadata
-from core.bands import BandInfo, BandName
+from .band import Band
 
-class SatelliteProduct(ABC):
+class ImageryProduct(ABC):
 
     @abstractmethod
-    def metadata(self) -> ProductMetadata:
+    def root(self) -> Path:
         ...
-    
+
     @abstractmethod
     def __getitem__(self, key: str) -> str:
         ...
 
     @abstractmethod
-    def bands(self) -> list[BandInfo]:
+    def bands(self) -> Sequence[Band]:
         ...
-
+    
     @abstractmethod
-    def band(self, band: BandName) -> BandInfo:
+    def acquisition_time(self) -> datetime:
         ...

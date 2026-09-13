@@ -1,14 +1,10 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from core.product import SatelliteProduct
+from .product import ImageryProduct
 
 
 class ProductProvider(ABC):
     @abstractmethod
-    def can_open(self, path: Path) -> bool:
-        ...
-
-    @abstractmethod
-    def open(self, path: Path) -> SatelliteProduct:
+    def open(self, path: Path) -> ImageryProduct:
         ...

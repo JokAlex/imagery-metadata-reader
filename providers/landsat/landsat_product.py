@@ -1,15 +1,16 @@
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Sequence
 
-from ...core.metadata import ProductMetadata
-from ...core.channel import ProductChannel
-from ...core.channel import SpectralRole
+from ...core.multispectral_band import MultispectralBand
+from ...core.multispectral_product import MultispectralProduct
+from ...core.spectral_role import SpectralRole
 
 from .mtl_parser import LandsatMtlParser
 from .landsat_datetime import parse_landsat_datetime
 
 
-class LandsatProduct:
+class LandsatProduct(MultispectralProduct):
     ROLE_MAP = {
         "BAND_1": SpectralRole.COASTAL,
         "BAND_2": SpectralRole.BLUE,
@@ -25,17 +26,35 @@ class LandsatProduct:
         "QUALITY_L1_PIXEL": SpectralRole.QA,
     }
 
+    RESOLUTIONS = {
+        SpectralRole.COASTAL: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.BLUE: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.GREEN: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.RED: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.NIR: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.SWIR1: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.SWIR2: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.PAN: "GRID_CELL_SIZE_PANCHROMATIC",
+        SpectralRole.CIRRUS: "GRID_CELL_SIZE_REFLECTIVE",
+        SpectralRole.TIRS1: "GRID_CELL_SIZE_THERMAL",
+        SpectralRole.TIRS2: "GRID_CELL_SIZE_THERMAL",
+        SpectralRole.QA: "GRID_CELL_SIZE_REFLECTIVE",
+    }
+
     def __init__(self, product_dir: Path):
         self._product_dir = product_dir
         self._base_path = ''
 
         self._mtl_file = self._find_mtl()
 
-        parser = LandsatMtlParser(
-            self._mtl_file
-        )
-
+        parser = LandsatMtlParser(self._mtl_file)
         self._data = parser.parse()
+        self._bands = tuple(self._parse_bands())
+        self._acquisition_time = parse_landsat_datetime(
+            self._data["DATE_ACQUIRED"],
+            self._data["SCENE_CENTER_TIME"]
+        )
+        self._cloud_cover = float(self._data["CLOUD_COVER"])
 
     def _find_mtl(self) -> Path:
         for file in self._product_dir.iterdir():
@@ -48,41 +67,10 @@ class LandsatProduct:
             "MTL file not found"
         )
 
-    def metadata(self) -> ProductMetadata:
-        acquisition = parse_landsat_datetime(
-            self._data["DATE_ACQUIRED"],
-            self._data["SCENE_CENTER_TIME"]
-        )
+    def _parse_bands(self) -> Sequence[MultispectralBand]:
+        bands = []
 
-        return ProductMetadata(
-            satellite=self._data.get(
-                "SPACECRAFT_ID",
-                ""
-            ),
-            sensor=self._data.get(
-                "SENSOR_ID",
-                ""
-            ),
-            acquisition_time=acquisition,
-            cloud_cover=float(
-                self._data["CLOUD_COVER"]
-            ),
-            sun_azimuth=float(
-                self._data["SUN_AZIMUTH"]
-            ),
-            sun_elevation=float(
-                self._data["SUN_ELEVATION"]
-            ),
-            processing_level=self._data.get(
-                "PROCESSING_LEVEL"
-            ),
-            _data=self._data
-        )
-
-    def channels(self) -> list[ProductChannel]:
-        channels = []
-
-        for band_id, role in self.ROLE_MAP.items():
+        for index, (band_id, role) in enumerate(self.ROLE_MAP.items()):
             file_name = self._data.get(f"FILE_NAME_{band_id}", None)
 
             if file_name is None:
@@ -93,37 +81,36 @@ class LandsatProduct:
             if not Path(file_name).is_file():
                 continue
 
-            channels.append(
-                ProductChannel(
-                    id=band_id,
+            resolution = float(self._data[self.RESOLUTIONS[role]])
+
+            bands.append(
+                MultispectralBand(
+                    index=index,
                     role=role,
-                    path=file_name
+                    path=file_name,
+                    resolution=(resolution, resolution)
                 )
             )
+        return bands
 
-        return channels
+    def bands(self) -> Sequence[MultispectralBand]:
+        return self._bands
 
-    def channel(
-        self,
-        band_id: str
-    ) -> ProductChannel:
-        for channel in self.channels():
-
-            if channel.id == band_id:
-                return channel
-
-        raise KeyError(band_id)
-
-    def band_by_role(
-        self,
-        role: SpectralRole
-    ) -> ProductChannel:
-        for channel in self.channels():
-
-            if channel.role == role:
-                return channel
+    def band_by_role(self, role: SpectralRole) -> MultispectralBand:
+        for band in self._bands:
+            if band.role() == role:
+                return band
 
         raise KeyError(role)
     
     def __getitem__(self, key: str) -> str:
         return self._data[key]
+
+    def root(self) -> Path:
+        return self._product_dir
+
+    def acquisition_time(self) -> datetime:
+        return self._acquisition_time
+
+    def cloud_cover(self) -> float:
+        return self._cloud_cover

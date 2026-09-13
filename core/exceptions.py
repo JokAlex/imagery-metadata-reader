@@ -1,2 +1,6 @@
 class UnsupportedProductError(Exception):
     ...
+
+
+class ProductNotFoundError(Exception):
+    ...

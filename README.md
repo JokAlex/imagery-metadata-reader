@@ -5,20 +5,20 @@ Imagery Metadata Reader is a plugin for QGIS that allows you to extract metadata
 ## Usage example
 
 ```python
+from imagery_metadata_reader import (
+    LayerResolver, LandsatProvider, SpectralRole
+)
+
 # First of all, you should create an instance of LayerResolver
 resolver = LayerResolver()
 
 # With resolver you can get directory of image
-product_dir = resolver.product_root(
-    raster_layer
-)
+product_dir = resolver.product_root(raster_layer)
 
-# For reading and accessing metadata you should create provider for satellite imagery system of your image
+# For reading and accessing metadata you should create provider 
+# for satellite imagery system of your image
 provider = LandsatProvider()
-
-product = provider.open(
-    product_dir
-)
+product = provider.open(product_dir)
 
 metadata = product.metadata()
 
@@ -29,9 +29,7 @@ print("Acquisition time =", metadata.acquisition_time)
 print("Origin:", metadata["ORIGIN"])
 
 # Also, you can get each available band from product:
-nir = product.band_by_role(
-    SpectralRole.SWIR1
-)
+nir = product.band_by_role(SpectralRole.SWIR1)
 
 print("Path to NIR band file =", nir.path)
 ```
@@ -40,7 +38,7 @@ For more examples see `examples` directory.
 
 ## Building a release
 
-If you have `make`, you can build the plugin relese with the command:
+If you have `make`, you can build the plugin release with the command:
 
 ```bash
 make release
