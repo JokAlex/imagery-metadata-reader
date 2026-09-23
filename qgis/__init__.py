@@ -1,1 +1,4 @@
-from .layer_resolver import *
+try:
+    from .layer_resolver import *
+except ImportError:
+    pass

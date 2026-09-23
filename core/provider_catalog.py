@@ -6,7 +6,7 @@ from .provider_registry import ProviderRegistry
 from .product import ImageryProduct
 from .provider import ProductProvider
 
-from ..providers import landsat
+from ..providers import landsat, sentinel2
 
 
 class ProviderCatalog(ProviderRegistry):
@@ -27,4 +27,7 @@ class ProviderCatalog(ProviderRegistry):
 
     @staticmethod
     def default() -> ProductProvider:
-        return ProviderCatalog([landsat.LandsatProvider()])
+        return ProviderCatalog([
+            landsat.LandsatProvider(),
+            sentinel2.Sentinel2Provider(),
+        ])

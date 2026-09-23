@@ -52,7 +52,8 @@ def create_release():
             ignore=shutil.ignore_patterns(
                 "__pycache__",
                 "*.pyc",
-                "*.pyo"
+                "*.pyo",
+                ".dist"
             )
         )
     
