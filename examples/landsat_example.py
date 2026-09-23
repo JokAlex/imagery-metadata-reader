@@ -1,4 +1,4 @@
-from imagery_metadata_reader import LandsatProvider, QgsLayerResolver, SpectralRole
+from imagery_metadata_reader import QgsLayerResolver, SpectralRole
 from qgis.utils import iface
 
 
