@@ -1,0 +1,25 @@
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "imagery-metadata-reader"
+version = "0.1.0"
+description = "Library for reading satellite imagery metadata"
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = []
+
+
+[tool.setuptools]
+package-dir = { "imagery_metadata_reader" = "." }
+packages = [
+    "imagery_metadata_reader",
+    "imagery_metadata_reader.core",
+    "imagery_metadata_reader.providers",
+    "imagery_metadata_reader.providers.landsat",
+]
+include-package-data = false
